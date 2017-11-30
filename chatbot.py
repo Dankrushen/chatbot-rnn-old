@@ -5,7 +5,7 @@ import tensorflow as tf
 
 import argparse
 import os
-import cPickle
+import pickle as cPickle
 import copy
 import sys
 import string
@@ -107,10 +107,10 @@ def sample_main(args):
     # Arguments passed to sample.py direct us to a saved model.
     # Load the separate arguments by which that model was previously trained.
     # That's saved_args. Use those to load the model.
-    with open(config_path) as f:
+    with open(config_path, 'rb') as f:
         saved_args = cPickle.load(f)
     # Separately load chars and vocab from the save directory.
-    with open(vocab_path) as f:
+    with open(vocab_path, 'rb') as f:
         chars, vocab = cPickle.load(f)
     # Create the model from the saved arguments, in inference mode.
     print("Creating model...")
@@ -178,7 +178,7 @@ def initial_state_with_relevance_masking(net, sess, relevance):
 def chatbot(net, sess, chars, vocab, max_length, beam_width, relevance, temperature):
     states = initial_state_with_relevance_masking(net, sess, relevance)
     while True:
-        user_input = sanitize_text(vocab, raw_input('\n> '))
+        user_input = sanitize_text(vocab, input('\n> '))
         user_command_entered, reset, states, relevance, temperature, beam_width = process_user_command(
             user_input, states, relevance, temperature, beam_width)
         if reset: states = initial_state_with_relevance_masking(net, sess, relevance)
@@ -225,7 +225,7 @@ def process_user_command(user_input, states, relevance, temperature, beam_width)
     return user_command_entered, reset, states, relevance, temperature, beam_width
 
 def consensus_length(beam_outputs, early_term_token):
-    for l in xrange(len(beam_outputs[0])):
+    for l in range(len(beam_outputs[0])):
         if l > 0 and beam_outputs[0][l-1] == early_term_token:
             return l-1, True
         for b in beam_outputs[1:]:

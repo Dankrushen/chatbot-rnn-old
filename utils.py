@@ -2,8 +2,8 @@ import codecs
 import os
 import io
 import collections
-import cPickle
-from bz2 import BZ2File
+import pickle as cPickle
+import bz2
 import numpy as np
 
 class TextLoader():
@@ -30,13 +30,13 @@ class TextLoader():
             # If either the vocab file or the tensor file doesn't already exist, create them.
             print("Preprocessing the following files: {}".format(self.input_files))
             vocab_counter = collections.Counter()
-            for i in xrange(self.input_file_count):
+            for i in range(self.input_file_count):
                 print("reading vocab from input file {}".format(self.input_files[i]))
                 self._augment_vocab(vocab_counter, self.input_files[i])
             print("saving vocab file")
             self._save_vocab(vocab_counter, vocab_file)
 
-            for i in xrange(self.input_file_count):
+            for i in range(self.input_file_count):
                 print("preprocessing input file {}".format(self.input_files[i]))
                 self._preprocess(self.input_files[i], self.tensor_file_template.format(i))
                 self.tensor_sizes.append(self.tensor.size)
@@ -47,13 +47,13 @@ class TextLoader():
             print ("processed input text file: {} characters loaded".format(self.tensor.size))
         else:
             # If the vocab file and sizes file already exist, load them.
-            print "loading vocab file"
+            print ("loading vocab file")
             self._load_vocab(vocab_file)
-            print "loading sizes file"
+            print ("loading sizes file")
             with open(sizes_file, 'rb') as f:
                 self.tensor_sizes = cPickle.load(f)
-        self.tensor_batch_counts = [n / (self.batch_size * self.seq_length) for n in self.tensor_sizes]
-        self.total_batch_count = sum(self.tensor_batch_counts)
+        self.tensor_batch_counts = [int(n / (self.batch_size * self.seq_length)) for n in self.tensor_sizes]
+        self.total_batch_count = int(sum(self.tensor_batch_counts))
         print("total batch count: {}".format(self.total_batch_count))
 
         self.tensor_index = -1
@@ -65,7 +65,7 @@ class TextLoader():
         if not os.path.exists(sizes_file):
             print("No sizes file found. Preprocessing...")
             return True
-        for i in xrange(input_file_count):
+        for i in range(input_file_count):
             if not os.path.exists(tensor_file_template.format(i)):
                 print ("Couldn't find {}. Preprocessing...".format(tensor_file_template.format(i)))
                 return True
@@ -87,8 +87,8 @@ class TextLoader():
     def _augment_vocab(self, vocab_counter, input_file):
         # Load up the input.txt file and use it to create a vocab file and a tensor file
         # at the specified file paths.
-        if input_file.endswith(".bz2"): file_reference = BZ2File(input_file, "r")
-        elif input_file.endswith(".txt"): file_reference = io.open(input_file, "r")
+        if input_file.endswith(".bz2"): file_reference = bz2.open(input_file, "rt", encoding="utf8")
+        elif input_file.endswith(".txt"): file_reference = io.open(input_file, "r", encoding="utf8")
         raw_data = file_reference.read()
         file_reference.close()
         u_data = raw_data.encode(encoding=self.encoding)
@@ -113,7 +113,7 @@ class TextLoader():
         # list() then packages these two tuples into a list of the same two tuples,
         # and the assignment passes the first tuple (characters in descending order) to self.chars
         # and the second (character counts) to a disregarded variable.
-        self.chars, _ = list(zip(*count_pairs))
+        self.chars, _ = zip(*count_pairs)
         # self.vocab_size counts the number of characters used in input.txt.
         self.vocab_size = len(self.chars)
         # self.vocab is a dictionary that maps each character to its index number. For example:
@@ -135,8 +135,8 @@ class TextLoader():
         self.vocab = dict(zip(self.chars, range(len(self.chars))))
 
     def _preprocess(self, input_file, tensor_file):
-        if input_file.endswith(".bz2"): file_reference = BZ2File(input_file, "r")
-        elif input_file.endswith(".txt"): file_reference = io.open(input_file, "r")
+        if input_file.endswith(".bz2"): file_reference = bz2.open(input_file, "rt", encoding="utf8")
+        elif input_file.endswith(".txt"): file_reference = io.open(input_file, "r", encoding="utf8")
         raw_data = file_reference.read()
         file_reference.close()
         data = raw_data.encode(encoding=self.encoding)
@@ -145,7 +145,7 @@ class TextLoader():
         # executed on each member of the iterable. E.g.:
         # [14, 2, 9, 2, 0, 6, 7, 0, ...]
         # np.array converts the list into a numpy array.
-        self.tensor = np.array(map(self.vocab.get, data))
+        self.tensor = np.array(list(map(self.vocab.get, data)))
         # Compress and save the numpy tensor array to data.npz.
         np.savez_compressed(tensor_file, tensor_data=self.tensor)
 
@@ -161,7 +161,7 @@ class TextLoader():
         self.tensor_index = tensor_index
         # Calculate the number of batches in the data. Each batch is batch_size x seq_length,
         # so this is just the input data size divided by that product, rounded down.
-        self.num_batches = self.tensor.size / (self.batch_size * self.seq_length)
+        self.num_batches = int(self.tensor.size / (self.batch_size * self.seq_length))
         if self.tensor_batch_counts[tensor_index] != self.num_batches:
             print("Error in batch size! Expected {}; found {}".format(self.tensor_batch_counts[tensor_index],
                     self.num_batches))
