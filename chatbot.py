@@ -57,9 +57,9 @@ def libchatbot(save_dir='models/reddit', max_length=500, beam_width=4,
     saved_args = None
     chars = None
     vocab = None
-    with open(config_path) as f:
+    with open(config_path, 'rb') as f:
         saved_args = cPickle.load(f)
-    with open(vocab_path) as f:
+    with open(vocab_path, 'rb') as f:
         chars, vocab = cPickle.load(f)
     net = Model(saved_args, True)
     config = tf.ConfigProto()

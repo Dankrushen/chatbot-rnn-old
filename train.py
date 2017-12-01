@@ -55,7 +55,7 @@ def train(args):
         # Trained model already exists
         ckpt = tf.train.get_checkpoint_state(args.save_dir)
         if ckpt and ckpt.model_checkpoint_path:
-            with open(os.path.join(args.save_dir, 'config.pkl')) as f:
+            with open(os.path.join(args.save_dir, 'config.pkl'), 'rb') as f:
                 saved_args = cPickle.load(f)
                 args.rnn_size = saved_args.rnn_size
                 args.num_layers = saved_args.num_layers
