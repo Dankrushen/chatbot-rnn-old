@@ -89,9 +89,9 @@ class TextLoader():
         # at the specified file paths.
         if input_file.endswith(".bz2"): file_reference = bz2.open(input_file, "rt", encoding="utf8")
         elif input_file.endswith(".txt"): file_reference = io.open(input_file, "r", encoding="utf8")
-        raw_data = file_reference.read()
+        u_data = file_reference.read()
         file_reference.close()
-        u_data = raw_data.encode(encoding=self.encoding)
+        # u_data = raw_data.encode(encoding=self.encoding)
         vocab_counter.update(u_data)
 
     def _save_vocab(self, vocab_counter, vocab_file):
@@ -120,6 +120,7 @@ class TextLoader():
         # [(' ', 0), ('a', 1), ('e', 2), ('n', 3), ...]
         # This is a lookup device to convert a character to its index number.
         self.vocab = dict(zip(self.chars, range(len(self.chars))))
+
         # Save the characters tuple to vocab.pkl (tiny file).
         with open(vocab_file, 'wb') as f:
             cPickle.dump(self.chars, f)
@@ -137,9 +138,9 @@ class TextLoader():
     def _preprocess(self, input_file, tensor_file):
         if input_file.endswith(".bz2"): file_reference = bz2.open(input_file, "rt", encoding="utf8")
         elif input_file.endswith(".txt"): file_reference = io.open(input_file, "r", encoding="utf8")
-        raw_data = file_reference.read()
+        data = file_reference.read()
         file_reference.close()
-        data = raw_data.encode(encoding=self.encoding)
+        # data = raw_data.encode(encoding=self.encoding)
         # Convert the entirety of the data file from characters to indices via the vocab dictionary.
         # How? map(function, iterable) returns a list of the output of the function
         # executed on each member of the iterable. E.g.:
