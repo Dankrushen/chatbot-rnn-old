@@ -76,7 +76,7 @@ def libchatbot(save_dir='models/reddit', max_length=500, beam_width=4,
     }
 
     def consumer(text, args=args, net=net, vocab=vocab, max_length=max_length,
-            relevance=relevance, temperaturer=temperature, beam_width=beam_width):
+            relevance=relevance, temperature=temperature, beam_width=beam_width):
         user_input = sanitize_text(vocab, text)
         states = args['states']
         session = args['session']
@@ -99,7 +99,18 @@ def libchatbot(save_dir='models/reddit', max_length=500, beam_width=4,
         args['states'] = states
         args['session'] = session
         return result
-    return consumer
+    
+    def save_states(name):
+        with open(name + '.pkl', 'wb') as f:
+            cPickle.dump(args['states'], f)
+
+    def load_states(name):
+        with open(name + '.pkl', 'rb') as f:
+            args['states'] = cPickle.load(f)
+
+    def reset_states(net=net, relevance=relevance):
+        args['states'] = initial_state_with_relevance_masking(net, args['session'], relevance)
+    return save_states, load_states, reset_states, consumer
 
 
 def sample_main(args):
@@ -195,6 +206,15 @@ def chatbot(net, sess, chars, vocab, max_length, beam_width, relevance, temperat
             if i >= max_length: break
         states = forward_text(net, sess, states, vocab, '\n> ')
 
+def save_states(states, name):
+    with open(name + '.pkl', 'wb') as f:
+        cPickle.dump(states, f)
+
+def load_states(name):
+    global states
+    with open(name + '.pkl', 'rb') as f:
+        states = cPickle.load(f)
+
 def process_user_command(user_input, states, relevance, temperature, beam_width):
     user_command_entered = False
     reset = False
@@ -220,6 +240,16 @@ def process_user_command(user_input, states, relevance, temperature, beam_width)
             user_command_entered = True
             reset = True
             print("[Model state reset]")
+        elif user_input.startswith('--save '):
+            user_command_entered = True
+            input_text = user_input[len('--save '):]
+            save_states(states, input_text)
+            print("[Saved states to \"{}.pkl\"]".format(input_text))
+        elif user_input.startswith('--load '):
+            user_command_entered = True
+            input_text = user_input[len('--load '):]
+            load_states(input_text)
+            print("[Loaded saved states from \"{}.pkl\"]".format(input_text))
     except ValueError:
         print("[Value error with provided argument.]")
     return user_command_entered, reset, states, relevance, temperature, beam_width
