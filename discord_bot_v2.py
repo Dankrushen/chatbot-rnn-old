@@ -37,7 +37,7 @@ async def on_ready():
     print()
     print('Discord Bot ready!')
 
-def process_command(msg_content, message):
+async def process_command(msg_content, message):
     global states_file, save, load, reset, consumer, autosave
     user_command_entered = False
     response = ""
@@ -124,7 +124,7 @@ async def on_message(message):
         
         if not msg_content == '':
             if not len(msg_content) > 500:
-                user_command_entered, response = process_command(msg_content, message)
+                user_command_entered, response = await process_command(msg_content, message)
 
                 if user_command_entered:
                     await client.send_message(message.channel, response)
