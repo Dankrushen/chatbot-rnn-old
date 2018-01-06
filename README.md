@@ -1,6 +1,9 @@
 # chatbot-rnn
 A toy chatbot powered by deep learning and trained on data from Reddit.
 
+# Outdated
+Please do not use this repository, the original repository from pender (https://github.com/pender/chatbot-rnn) has now been fully updated. Though I may not be updating this repository anymore, I will create a new repository using pender's updated code.
+
 Here is a sample chat transcript (not cherry-picked). Lines that start with ">" are me; the lines without ">" are the chatbot's responses.
 
 ```
