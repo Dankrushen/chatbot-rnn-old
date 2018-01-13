@@ -1,5 +1,5 @@
 # Outdated
-Please do not use this repository, the original repository from pender (https://github.com/pender/chatbot-rnn) has now been fully updated. Though I may not be updating this repository anymore, I will update [this](https://github.com/Dankrushen/chatbot-rnn-1) repository starting January 6, 2018
+Please do not use this repository, the original repository from pender (https://github.com/pender/chatbot-rnn) has now been fully updated. Though I may not be updating this repository anymore, I will update [this](https://github.com/Dankrushen/chatbot-rnn) repository starting January 6, 2018
 
 # chatbot-rnn
 A toy chatbot powered by deep learning and trained on data from Reddit.
