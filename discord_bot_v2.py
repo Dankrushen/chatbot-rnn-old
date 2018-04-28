@@ -12,14 +12,13 @@ except:
     if os.name == 'nt': print(msg)
 
 log_name = "Discord-Bot_Session.log"
-log_file = open(log_name, "a", encoding="utf-8")
 
 states_file = "general"
 autosave = True
 operators = ['Discord User IDs Here'];
 
 print('Loading Chatbot-RNN...')
-save, load, reset, consumer = libchatbot()
+save, load, reset, consumer = libchatbot(relevance=0.2)
 if os.path.exists(states_file + ".pkl") and os.path.isfile(states_file + ".pkl"):
     load(states_file)
     print('Loaded pre-existing Chatbot-RNN states.')
@@ -27,6 +26,10 @@ print('Chatbot-RNN has been loaded.')
 
 print('Preparing Discord Bot...')
 client = discord.Client()
+
+def log(message):
+    with open(log_name, "a", encoding="utf-8") as log_file:
+        log_file.write(message)
 
 @client.event
 async def on_ready():
@@ -130,13 +133,21 @@ async def on_message(message):
                     await client.send_message(message.channel, response)
                 else:
                     print()
-                    print('\"' + msg_content + '\"')
-                    log_file.write('\n\"' + msg_content + '\"')
+                    print('> ' + msg_content)
+                    log('\n> ' + msg_content)
                     result = consumer(msg_content)
+
+                    print()
+
+                    if result == '':
+                        result = "..."
+
+                    result = "<@" + message.author.id + "> -" + result
+                    
                     await client.send_message(message.channel, result)
-                    print('> ' + result)
-                    log_file.write('\n> ' + result)
-                    log_file.write('\n')
+                    #print('> ' + result)
+                    log('\n' + result)
+                    log('\n')
                     if autosave:
                         save(states_file)
             else:
@@ -144,4 +155,4 @@ async def on_message(message):
         else:
             await client.send_message(message.channel, 'Error: Missing message!')
 
-client.run('Bot Token Goes Here')
+client.run('Bot Token Goes Here', reconnect=True)

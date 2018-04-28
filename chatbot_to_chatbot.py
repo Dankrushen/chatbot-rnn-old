@@ -5,7 +5,6 @@ import pickle as cPickle
 from random import randint
 
 log_name = "Chatbot_to_Chatbot_Session.log"
-log_file = open(log_name, "a")
 
 main_states_file = "chat2chat"
 temp_states_file = main_states_file + "_temp"
@@ -18,7 +17,7 @@ last_message = ["Hi", 0] # Starts at 0 so the first chatbot has something to wor
 current_message = last_message
 
 print('Loading Chatbot-RNN...')
-save, load, reset, consumer = libchatbot()
+save, load, reset, consumer = libchatbot(relevance=0.4)
 print('Chatbot-RNN has been loaded.')
 
 def save_last_message():
@@ -30,6 +29,10 @@ def load_last_message():
     global last_message
     with open(last_message_file + '.pkl', 'rb') as f:
         last_message = cPickle.load(f)
+
+def log(message):
+    with open(log_name, "a", encoding="utf-8") as log_file:
+        log_file.write(message)
 
 if os.path.exists(last_message_file + ".pkl") and os.path.isfile(last_message_file + ".pkl"):
     load_last_message()
@@ -60,7 +63,7 @@ while True:
             print()
             print('Processing Chatbot #' + str(bot_num_index) + ' out of ' + str(total_bot_count) + (' (Chosen response)' if bot_num_index == bot_number else '') + '...')
             result = consumer(last_message[0])
-            print('Done > ' + result)
+            #print('Done > ' + result)
 
             # If the bot is the random bot, set the current message to it's response
             if bot_num_index == bot_number:
@@ -104,6 +107,6 @@ while True:
     print()
     print()
     print('Chatbot #' + str(bot_number) + ' > ' + last_message[0])
-    log_file.write('Chatbot #' + str(bot_number) + ' > ' + last_message[0])
+    log('Chatbot #' + str(bot_number) + ' > ' + last_message[0])
     print()
-    log_file.write('\n\n')
+    log('\n\n')
