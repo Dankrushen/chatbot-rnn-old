@@ -1,7 +1,6 @@
 from chatbot import libchatbot
 import os.path
-import time
-import pickle as cPickle
+import pickle
 from random import randint
 
 log_name = "Chatbot_to_Chatbot_Session.log"
@@ -16,19 +15,24 @@ bot_number = 0 # Starting value
 last_message = ["Hi", 0] # Starts at 0 so the first chatbot has something to work off of
 current_message = last_message
 
+temperature = 1.2
+relevance = 0.2
+topn = 6
+max_length = 500
+
 print('Loading Chatbot-RNN...')
-save, load, reset, consumer = libchatbot(relevance=0.4)
+save, load, reset, change_settings, consumer = libchatbot(temperature=temperature, relevance=relevance, topn=topn, max_length=max_length)
 print('Chatbot-RNN has been loaded.')
 
 def save_last_message():
     global last_message
     with open(last_message_file + '.pkl', 'wb') as f:
-            cPickle.dump(last_message, f)
+            pickle.dump(last_message, f)
             
 def load_last_message():
     global last_message
     with open(last_message_file + '.pkl', 'rb') as f:
-        last_message = cPickle.load(f)
+        last_message = pickle.load(f)
 
 def log(message):
     with open(log_name, "a", encoding="utf-8") as log_file:
