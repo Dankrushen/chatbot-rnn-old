@@ -91,7 +91,8 @@ def libchatbot(save_dir='models/reddit', max_length=500, beam_width=2,
         'states': states,
         'relevance': relevance,
         'temperature': temperature,
-        'topn': topn
+        'topn': topn,
+        'beam_width': beam_width
     }
 
     def consumer(text, args=args, states=None, net=net, vocab=vocab, max_length=max_length,
@@ -103,6 +104,7 @@ def libchatbot(save_dir='models/reddit', max_length=500, beam_width=2,
         relevance = args['relevance']
         temperature = args['temperature']
         topn = args['topn']
+        beam_width = args['beam_width']
         
         states = forward_text(net, session, states, relevance, vocab, sanitize_text(vocab, "> " + user_input + "\n>"))
         computer_response_generator = beam_search_generator(sess=session, net=net,
@@ -126,6 +128,7 @@ def libchatbot(save_dir='models/reddit', max_length=500, beam_width=2,
         args['relevance'] = relevance
         args['temperature'] = temperature
         args['topn'] = topn
+        args['beam_width'] = beam_width
         
         return result
     
@@ -142,20 +145,26 @@ def libchatbot(save_dir='models/reddit', max_length=500, beam_width=2,
             args['temperature'] = max(0.001, float(new_value))
             return ("[Temperature set to {}]".format(args['temperature']))
         elif setting.startswith('relevance'):
+            states = args['states']
+            relevance = args['relevance']
             new_relevance = float(new_value)
             if relevance <= 0. and new_relevance > 0.:
                 states = [states, copy.deepcopy(states)]
             elif relevance > 0. and new_relevance <= 0.:
                 states = states[0]
+            args['states'] = states
             args['relevance'] = new_relevance
             return ("[Relevance disabled]" if args['relevance'] <= 0. else "[Relevance set to {}]".format(args['relevance']))
         elif setting.startswith('topn'):
             args['topn'] = int(new_value)
             return ("[Top-n filtering disabled]" if args['topn'] <= 0 else "[Top-n filtering set to {}]".format(args['topn']))
+        elif setting.startswith('beam_width'):
+            args['beam_width'] = max(1, int(new_value))
+            return ("[Beam width set to {}]".format(args['beam_width']))
 
     
-    def reset_states(net=net, relevance=relevance, args=args):
-        states = initial_state_with_relevance_masking(net, args['session'], relevance)
+    def reset_states(net=net, args=args):
+        states = initial_state_with_relevance_masking(net, args['session'], args['relevance'])
         args['states'] = states
         return states
     return save_states, load_states, reset_states, change_settings, consumer

@@ -14,21 +14,22 @@ except:
 
 log_name = "Discord-Bot_Session.log"
 
-states_file = "general"
+saved_states_folder = "saved_states" + "/"
+states_file = saved_states_folder + "general"
 autosave = True
 
-user_settings_folder = "user_settings"
-ult_operators_file = user_settings_folder + "/" + "ult_operators.cfg"
-operators_file = user_settings_folder + "/" + "operators.cfg"
-banned_users_file = user_settings_folder + "/" + "banned_users.cfg"
+user_settings_folder = "user_settings" + "/"
+ult_operators_file = user_settings_folder + "ult_operators.cfg"
+operators_file = user_settings_folder + "operators.cfg"
+banned_users_file = user_settings_folder + "banned_users.cfg"
 
 ult_operators = []
 operators = []
 banned_users = []
 
 temperature = 1.2
-relevance = 0.2
-topn = 6
+relevance = 0.1
+topn = 10
 max_length = 500
 
 print('Loading Chatbot-RNN...')
@@ -57,6 +58,9 @@ async def on_ready():
 def make_folders():
     if not os.path.exists(user_settings_folder):
         os.makedirs(user_settings_folder)
+        
+    if not os.path.exists(saved_states_folder):
+        os.makedirs(saved_states_folder)
 
 def is_discord_id(user_id):
     # Quick general check to see if it matches the ID formatting
@@ -161,7 +165,7 @@ async def process_command(msg_content, message):
         elif msg_content.startswith('--save '):
             user_command_entered = True
             if message.author.id in operators:
-                input_text = msg_content[len('--save '):]
+                input_text = saved_states_folder + msg_content[len('--save '):]
                 save(input_text)
                 print()
                 print("[Saved states to \"{}.pkl\"]".format(input_text))
@@ -172,7 +176,7 @@ async def process_command(msg_content, message):
         elif msg_content.startswith('--load '):
             user_command_entered = True
             if message.author.id in operators:
-                input_text = msg_content[len('--load '):]
+                input_text = saved_states_folder + msg_content[len('--load '):]
                 load(input_text)
                 print()
                 print("[Loaded saved states from \"{}.pkl\"]".format(input_text))
@@ -183,7 +187,7 @@ async def process_command(msg_content, message):
         elif msg_content.startswith('--autosave '):
             user_command_entered = True
             if message.author.id in operators:
-                input_text = msg_content[len('--autosave '):]
+                input_text = saved_states_folder + msg_content[len('--autosave '):]
                 states_file = input_text
                 load(states_file)
                 print()
@@ -232,16 +236,25 @@ async def process_command(msg_content, message):
                     user_exists = False
                 except discord.HTTPException:
                     user_exists = False
-                
-                if not input_text in ult_operators and user_exists:
-                    load_ops_bans()
-                    operators.append(input_text)
-                    save_ops_bans()
-                    print()
-                    print("[Opped \"{}\"]".format(input_text))
-                    response = "Opped \"{}\".".format(input_text)
+
+                if not input_text == message.author.id:
+                    if not input_text in ult_operators and user_exists and not input_text == client.user.id:
+                        if not input_text in operators:
+                            if not input_text in banned_users:
+                                load_ops_bans()
+                                operators.append(input_text)
+                                save_ops_bans()
+                                print()
+                                print("[Opped \"{}\"]".format(input_text))
+                                response = "Opped \"{}\".".format(input_text)
+                            else:
+                                response = "Error: Unable to op user \"{}\", they're banned!".format(input_text)
+                        else:
+                            response = "Error: Unable to op user \"{}\", they're already OP...".format(input_text)
+                    else:
+                        response = "Error: Unable to op user \"{}\", either they don't exist or you don't have permission to do so.".format(input_text)
                 else:
-                    response = "Error: Unable to op user \"{}\".".format(input_text)
+                    response = "Error: Unable to op user \"{}\", that's yourself...".format(input_text)
             else:
                 response = "Error: Insufficient permissions."
 
@@ -259,17 +272,23 @@ async def process_command(msg_content, message):
                     user_exists = False
                 except discord.HTTPException:
                     user_exists = False
-                
-                if not input_text in ult_operators and user_exists:
-                    load_ops_bans()
-                    if input_text in operators:
-                        operators.remove(input_text)
-                    save_ops_bans()
-                    print()
-                    print("[De-opped \"{}\"]".format(input_text))
-                    response = "De-opped \"{}\".".format(input_text)
+
+                if not input_text == message.author.id:
+                    if not input_text in ult_operators and user_exists and not input_text == client.user.id:
+                        if input_text in operators:
+                            load_ops_bans()
+                            if input_text in operators:
+                                operators.remove(input_text)
+                            save_ops_bans()
+                            print()
+                            print("[De-opped \"{}\"]".format(input_text))
+                            response = "De-opped \"{}\".".format(input_text)
+                        else:
+                            response = "Error: Unable to de-op user \"{}\", they're already OP...".format(input_text)
+                    else:
+                        response = "Error: Unable to de-op user \"{}\", either they don't exist or you don't have permission to do so.".format(input_text)
                 else:
-                    response = "Error: Unable to de-op user \"{}\".".format(input_text)
+                    response = "Error: Unable to de-op user \"{}\", that's yourself...".format(input_text)
             else:
                 response = "Error: Insufficient permissions."
 
@@ -287,16 +306,22 @@ async def process_command(msg_content, message):
                     user_exists = False
                 except discord.HTTPException:
                     user_exists = False
-                
-                if not input_text in ult_operators and user_exists:
-                    load_ops_bans()
-                    banned_users.append(input_text)
-                    save_ops_bans()
-                    print()
-                    print("[Banned \"{}\"]".format(input_text))
-                    response = "Banned \"{}\".".format(input_text)
+
+                if not input_text == message.author.id:
+                    if not input_text in ult_operators and user_exists and not input_text == client.user.id:
+                        if not input_text in banned_users:
+                            load_ops_bans()
+                            banned_users.append(input_text)
+                            save_ops_bans()
+                            print()
+                            print("[Banned \"{}\"]".format(input_text))
+                            response = "Banned \"{}\".".format(input_text)
+                        else:
+                            response = "Error: Unable to ban user \"{}\", they're already banned!".format(input_text)
+                    else:
+                        response = "Error: Unable to ban user \"{}\", either they don't exist or you don't have permission to do so.".format(input_text)
                 else:
-                    response = "Error: Unable to ban user \"{}\".".format(input_text)
+                    response = "Error: Unable to ban user \"{}\", that's yourself...".format(input_text)
             else:
                 response = "Error: Insufficient permissions."
 
@@ -314,17 +339,23 @@ async def process_command(msg_content, message):
                     user_exists = False
                 except discord.HTTPException:
                     user_exists = False
-                
-                if not input_text in ult_operators and user_exists:
-                    load_ops_bans()
-                    if input_text in banned_users:
-                        banned_users.remove(input_text)
-                    save_ops_bans()
-                    print()
-                    print("[Un-banned \"{}\"]".format(input_text))
-                    response = "Un-banned \"{}\".".format(input_text)
+
+                if not input_text == message.author.id:
+                    if not input_text in ult_operators and user_exists and not input_text == client.user.id:
+                        if input_text in banned_users:
+                            load_ops_bans()
+                            if input_text in banned_users:
+                                banned_users.remove(input_text)
+                            save_ops_bans()
+                            print()
+                            print("[Un-banned \"{}\"]".format(input_text))
+                            response = "Un-banned \"{}\".".format(input_text)
+                        else:
+                            response = "Error: Unable to un-ban user \"{}\", they're not banned!".format(input_text)
+                    else:
+                        response = "Error: Unable to un-ban user \"{}\", either they don't exist or you don't have permission to do so.".format(input_text)
                 else:
-                    response = "Error: Unable to un-ban user \"{}\".".format(input_text)
+                    response = "Error: Unable to un-ban user \"{}\", that's yourself...".format(input_text)
             else:
                 response = "Error: Insufficient permissions."
         
@@ -355,6 +386,17 @@ async def process_command(msg_content, message):
             if message.author.id in operators:
                 input_text = msg_content[len('--topn '):]
                 returned = change_settings('topn', input_text)
+                print()
+                print(str(returned))
+                response = str(returned)
+            else:
+                response = "Insufficient permissions."
+
+        elif msg_content.startswith('--beam_width '):
+            user_command_entered = True
+            if message.author.id in operators:
+                input_text = msg_content[len('--beam_width '):]
+                returned = change_settings('beam_width', input_text)
                 print()
                 print(str(returned))
                 response = str(returned)

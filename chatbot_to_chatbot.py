@@ -5,20 +5,35 @@ from random import randint
 
 log_name = "Chatbot_to_Chatbot_Session.log"
 
-main_states_file = "chat2chat"
-temp_states_file = main_states_file + "_temp"
-last_message_file = main_states_file + "_last_message"
+main_dir = "chat2chat_stuff" + "/"
+main_name = "chat2chat"
 
-total_bot_count = 8
+main_states_file = main_dir + main_name
+
+last_message_file = main_dir + main_name + "_last_message"
+
+temp_dir = main_dir + "temp" + "/"
+temp_states_file = temp_dir + main_name + "_temp"
+
+total_bot_count = 2
 
 bot_number = 0 # Starting value
-last_message = ["Hi", 0] # Starts at 0 so the first chatbot has something to work off of
+last_message = ["Hello!", 0] # Starts at 0 so the first chatbot has something to work off of
 current_message = last_message
 
 temperature = 1.2
-relevance = 0.2
-topn = 6
+relevance = 0.1
+topn = 10
 max_length = 500
+
+def make_folders():
+    if not os.path.exists(main_dir):
+        os.makedirs(main_dir)
+    
+    if not os.path.exists(temp_dir):
+        os.makedirs(temp_dir)
+
+make_folders()
 
 print('Loading Chatbot-RNN...')
 save, load, reset, change_settings, consumer = libchatbot(temperature=temperature, relevance=relevance, topn=topn, max_length=max_length)
